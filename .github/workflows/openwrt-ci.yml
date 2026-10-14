@@ -2,31 +2,45 @@ name: Build OpenWrt
 
 on:
   workflow_dispatch:
-    inputs:
-      ssh:
-        description: 开启SSH调试
-        required: false
-        default: 'true'
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - name: Tmate SSH 调试
-        if: github.event.inputs.ssh == 'true'
-        uses: mxschmitt/action-tmate@v3
-        with:
-          limit-access-to-actor: false
-
-      - name: Checkout code
+      - name: Checkout Lean Lede源码
         uses: actions/checkout@v4
+
+      - name: 安装编译依赖
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential flex bison gawk g++ gcc-multilib g++-multilib gettext git libncurses-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget
+
+      - name: 更新feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: 写入配置（小米R1CL，不带额外主题）
+        run: |
+          make defconfig
+          # 目标平台 ramips mt76x8 小米R1CL(MiWiFi Nano)
+          echo "CONFIG_TARGET_ramips=y" >> .config
+          echo "CONFIG_TARGET_ramips_mt76x8=y" >> .config
+          echo "CONFIG_TARGET_ramips_mt76x8_DEVICE_xiaomi_miwifi-nano=y" >> .config
+          make oldconfig
+
+      - name: 预下载源码包
+        run: make download -j8
+
+      - name: 开始编译
+        run: make V=s -j1
 
       - name: 打包固件
         run: |
-          tar -czf openwrt-firmware.tar.gz bin/
+          tar -czf lede-firmware.tar.gz bin/targets/ramips/mt76x8/
 
       - name: 上传固件
         uses: actions/upload-artifact@v4
         with:
-          name: firmware
-          path: openwrt-firmware.tar.gz
+          name: lede-firmware
+          path: lede-firmware.tar.gz
