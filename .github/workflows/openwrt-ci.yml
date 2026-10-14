@@ -21,12 +21,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 打包固件
+      # 【STEP1 打包】只执行shell命令
       - name: 打包固件
         run: |
-          tar -czf openwrt-firmware.tar.gz lede/bin/targets/ramips/mt76x8/
+          tar -czf openwrt-firmware.tar.gz bin/
 
-      # 上传产物，这一段单独一个step！！之前就是这里错了
+      # 【STEP2 单独一步上传】uses写在这里，独立step
       - name: 上传固件
         uses: actions/upload-artifact@v4
         with:
