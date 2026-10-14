@@ -12,19 +12,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # ========= 【第一步！虚拟机启动立刻进入SSH，卡在这】 =========
+      # 第一步：开机立刻tmate SSH等待连接
       - name: SSH调试 tmate
         if: github.event.inputs.ssh == 'true'
         uses: P3TERX/debugger-action@master
 
-      # 下面是后续自动步骤；SSH里面你手动编译完输入continue，才会执行下面
+      # 检出仓库代码
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 打包固件上传
-        if: success()
+      # 打包固件
+      - name: 打包固件
         run: |
-          tar -czf openwrt-firmware.tar.gz bin/
+          tar -czf openwrt-firmware.tar.gz lede/bin/targets/ramips/mt76x8/
+
+      # 上传产物，这一段单独一个step！！之前就是这里错了
+      - name: 上传固件
         uses: actions/upload-artifact@v4
         with:
           name: firmware
