@@ -12,23 +12,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 【第一步，虚拟机启动立刻打开tmate SSH，暂停流水线】
-      - name: SSH tmate 调试
+      - name: Tmate SSH 调试
         if: github.event.inputs.ssh == 'true'
         uses: mxschmitt/action-tmate@v3
         with:
-          limit-access-to-actor: true # 仅允许你本人连接，别人拿链接也进不来
+          limit-access-to-actor: true
 
-      # 检出你仓库里的lean源码
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 打包固件
       - name: 打包固件
         run: |
           tar -czf openwrt-firmware.tar.gz bin/
 
-      # 上传产物，单独一步
       - name: 上传固件
         uses: actions/upload-artifact@v4
         with:
